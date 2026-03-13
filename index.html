@@ -1,0 +1,1817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Scriptgo — AI Script Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #1a1612;
+    --paper: #faf8f5;
+    --cream: #f2ede6;
+    --tan: #e8dfd3;
+    --accent: #c9622f;
+    --accent-light: #f0e4db;
+    --muted: #8a7e74;
+    --serif: 'DM Serif Display', Georgia, serif;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.2rem 4rem;
+    background: rgba(250,248,245,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--tan);
+  }
+  .logo {
+    font-family: var(--serif);
+    font-size: 1.5rem;
+    color: var(--ink);
+    text-decoration: none;
+    letter-spacing: -0.02em;
+  }
+  .logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+  .nav-links a {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--accent); }
+  .nav-cta {
+    background: var(--ink);
+    color: var(--paper) !important;
+    padding: 0.55rem 1.4rem;
+    border-radius: 2px;
+  }
+  .nav-cta:hover { background: var(--accent); color: var(--paper) !important; }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    padding: 5rem 4rem 4rem;
+    gap: 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -20%; right: -10%;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, #f0dfd3 0%, transparent 70%);
+    z-index: 0;
+  }
+  .hero-left { position: relative; z-index: 1; }
+
+  /* ── Hero entrance animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  @keyframes btnPop {
+    0%   { opacity: 0; transform: translateY(18px) scale(0.97); }
+    60%  { transform: translateY(-3px) scale(1.02); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-size: 0.78rem; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-light);
+    padding: 0.4rem 1rem;
+    border-radius: 2px;
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fadeUp 0.6s ease 0.1s forwards;
+  }
+  .hero-tag::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: clamp(2.8rem, 5vw, 4.5rem);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+    color: var(--ink);
+    opacity: 0;
+    animation: fadeUp 0.7s ease 0.3s forwards;
+  }
+  .hero h1 em {
+    font-style: italic;
+    background: linear-gradient(90deg, var(--accent), #e8824f, var(--accent));
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: fadeUp 0.7s ease 0.3s forwards, shimmer 3s linear 1.2s infinite;
+  }
+  .hero p {
+    font-size: 1.05rem;
+    color: var(--muted);
+    max-width: 440px;
+    margin-bottom: 2.5rem;
+    line-height: 1.75;
+    font-weight: 300;
+    opacity: 0;
+    animation: fadeUp 0.7s ease 0.5s forwards;
+  }
+  .hero-btns {
+    display: flex; gap: 1rem; flex-wrap: wrap;
+    opacity: 0;
+    animation: fadeUp 0.7s ease 0.7s forwards;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    padding: 0.85rem 2rem;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    border: none; cursor: pointer;
+    letter-spacing: 0.02em;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 16px rgba(201,98,47,0.3);
+  }
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.25) 50%, transparent 70%);
+    background-size: 200% 100%;
+    background-position: -200% 0;
+    transition: background-position 0.5s;
+  }
+  .btn-primary:hover::after { background-position: 200% 0; }
+  .btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 28px rgba(201,98,47,0.4);
+  }
+  .btn-primary:active { transform: translateY(0) scale(0.97); }
+
+  .btn-outline {
+    border: 1.5px solid var(--ink);
+    color: var(--ink);
+    padding: 0.85rem 2rem;
+    border-radius: 30px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    position: relative; overflow: hidden;
+    transition: all 0.25s;
+  }
+  .btn-outline::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--ink);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+    z-index: 0;
+  }
+  .btn-outline span { position: relative; z-index: 1; }
+  .btn-outline:hover::before { transform: scaleX(1); }
+  .btn-outline:hover { color: var(--paper); }
+
+  .hero-right {
+    position: relative; z-index: 1;
+    background: #fff;
+    border: 1px solid var(--tan);
+    border-radius: 4px;
+    padding: 2rem;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.06);
+    animation: floatIn 0.8s ease both;
+  }
+  @keyframes floatIn {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .card-label {
+    font-size: 0.72rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+  .card-script {
+    background: var(--cream);
+    border-radius: 3px;
+    padding: 1.2rem;
+    font-size: 0.88rem;
+    color: var(--ink);
+    line-height: 1.8;
+    font-family: 'Courier New', monospace;
+    margin-bottom: 1.2rem;
+    border-left: 3px solid var(--accent);
+  }
+  .card-script strong { color: var(--accent); }
+  .langs {
+    display: flex; gap: 0.5rem; flex-wrap: wrap;
+  }
+  .lang-badge {
+    font-size: 0.72rem; font-weight: 600;
+    padding: 0.25rem 0.7rem;
+    border-radius: 30px;
+    background: var(--cream);
+    color: var(--muted);
+    border: 1px solid var(--tan);
+  }
+  .lang-badge.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  /* STATS */
+  .stats {
+    background: var(--ink);
+    padding: 3rem 4rem;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+  }
+  .stat { text-align: center; }
+  .stat-num {
+    font-family: var(--serif);
+    font-size: 2.5rem;
+    color: #fff;
+    letter-spacing: -0.03em;
+  }
+  .stat-num span { color: var(--accent); }
+  .stat-label {
+    font-size: 0.8rem; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-top: 0.3rem;
+  }
+
+  /* SECTION SHARED */
+  section { padding: 6rem 4rem; }
+  .section-header { margin-bottom: 3.5rem; }
+  .section-tag {
+    font-size: 0.75rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--accent);
+    margin-bottom: 0.8rem;
+  }
+  .section-title {
+    font-family: var(--serif);
+    font-size: clamp(2rem, 3.5vw, 3rem);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+  .section-sub {
+    font-size: 1rem; color: var(--muted);
+    margin-top: 0.8rem; max-width: 500px;
+    font-weight: 300; line-height: 1.75;
+  }
+
+  /* AI GENERATOR */
+  .generator-section { background: var(--cream); }
+  .generator-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: start;
+  }
+  .gen-form { display: flex; flex-direction: column; gap: 1.2rem; }
+  .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+  .form-group label {
+    font-size: 0.8rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  .form-group select,
+  .form-group input,
+  .form-group textarea {
+    padding: 0.8rem 1rem;
+    border: 1.5px solid var(--tan);
+    border-radius: 3px;
+    background: #fff;
+    font-family: var(--sans);
+    font-size: 0.9rem;
+    color: var(--ink);
+    transition: border-color 0.2s;
+    resize: none;
+  }
+  .form-group select:focus,
+  .form-group input:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .gen-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 1rem;
+    border-radius: 3px;
+    font-family: var(--sans);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    letter-spacing: 0.03em;
+    margin-top: 0.5rem;
+  }
+  .gen-btn:hover { background: #a84e24; transform: translateY(-1px); }
+  .gen-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  .gen-output {
+    background: #fff;
+    border: 1.5px solid var(--tan);
+    border-radius: 4px;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+  }
+  .output-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.2rem;
+    border-bottom: 1px solid var(--tan);
+  }
+  .output-title {
+    font-size: 0.8rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  .output-actions { display: flex; gap: 0.5rem; }
+  .icon-btn {
+    background: none; border: 1px solid var(--tan);
+    border-radius: 2px;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.78rem;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .output-body {
+    flex: 1;
+    padding: 1.5rem;
+    font-size: 0.9rem;
+    line-height: 1.9;
+    color: var(--ink);
+    overflow-y: auto;
+    white-space: pre-wrap;
+    font-family: var(--sans);
+  }
+  .output-placeholder {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    height: 100%;
+    color: var(--muted);
+    gap: 1rem;
+    text-align: center;
+    padding: 2rem;
+  }
+  .placeholder-icon {
+    width: 56px; height: 56px;
+    background: var(--cream);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+  }
+  .output-placeholder p { font-size: 0.9rem; max-width: 220px; font-weight: 300; }
+
+  /* loading animation */
+  .typing-dots { display: flex; gap: 4px; align-items: center; }
+  .typing-dots span {
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce {
+    0%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-8px); }
+  }
+
+  /* PORTFOLIO */
+  .portfolio-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+  .portfolio-card {
+    background: #fff;
+    border: 1px solid var(--tan);
+    border-radius: 4px;
+    overflow: hidden;
+    transition: box-shadow 0.25s, transform 0.25s;
+    cursor: pointer;
+  }
+  .portfolio-card:hover {
+    box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+    transform: translateY(-4px);
+  }
+  .card-thumb {
+    height: 160px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 3rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .card-body { padding: 1.2rem; }
+  .card-type {
+    font-size: 0.7rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 0.4rem;
+  }
+  .card-name {
+    font-family: var(--serif);
+    font-size: 1.15rem;
+    color: var(--ink);
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+  .card-desc {
+    font-size: 0.82rem;
+    color: var(--muted);
+    line-height: 1.6;
+    font-weight: 300;
+  }
+  .card-meta {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 1rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid var(--cream);
+  }
+  .card-lang {
+    font-size: 0.72rem; font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .card-words {
+    font-size: 0.72rem; color: var(--muted);
+  }
+
+  /* TESTIMONIALS */
+  .testimonials-section { background: var(--cream); }
+  .testimonials-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+  .testimonial-card {
+    background: #fff;
+    border: 1px solid var(--tan);
+    border-radius: 4px;
+    padding: 1.8rem;
+  }
+  .quote-mark {
+    font-family: var(--serif);
+    font-size: 3rem;
+    line-height: 1;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+  }
+  .testimonial-text {
+    font-size: 0.9rem;
+    color: var(--ink);
+    line-height: 1.75;
+    font-weight: 300;
+    margin-bottom: 1.2rem;
+    font-style: italic;
+  }
+  .testimonial-author {
+    display: flex; align-items: center; gap: 0.8rem;
+  }
+  .author-avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+  }
+  .author-name { font-size: 0.85rem; font-weight: 600; }
+  .author-role { font-size: 0.75rem; color: var(--muted); }
+
+  /* CTA */
+  .cta-section {
+    background: var(--ink);
+    text-align: center;
+    padding: 7rem 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-section::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(201,98,47,0.15) 0%, transparent 70%);
+  }
+  .cta-section h2 {
+    font-family: var(--serif);
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    color: #fff;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+    position: relative; z-index: 1;
+  }
+  .cta-section h2 em { color: var(--accent); font-style: italic; }
+  .cta-section p {
+    font-size: 1rem; color: var(--muted);
+    margin-bottom: 2.5rem;
+    position: relative; z-index: 1;
+    font-weight: 300;
+  }
+  .cta-section .btn-primary { position: relative; z-index: 1; font-size: 1rem; padding: 1rem 2.5rem; }
+
+  /* FOOTER */
+  footer {
+    padding: 2rem 4rem;
+    border-top: 1px solid var(--tan);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .footer-logo {
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    color: var(--ink);
+  }
+  .footer-logo span { color: var(--accent); }
+  .footer-copy { font-size: 0.8rem; color: var(--muted); }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    nav { padding: 1rem 1.5rem; }
+    .nav-links { display: none; }
+    .hero { grid-template-columns: 1fr; padding: 7rem 1.5rem 3rem; }
+    .hero-right { display: none; }
+    .stats { grid-template-columns: repeat(2, 1fr); padding: 2.5rem 1.5rem; }
+    section { padding: 4rem 1.5rem; }
+    .generator-wrap { grid-template-columns: 1fr; }
+    .portfolio-grid { grid-template-columns: 1fr 1fr; }
+    .testimonials-grid { grid-template-columns: 1fr; }
+    footer { flex-direction: column; gap: 0.5rem; text-align: center; }
+  }
+  @media (max-width: 600px) {
+    .portfolio-grid { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: 1fr 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+  }
+
+  /* ── Marquee Strip ── */
+  .marquee-wrap {
+    width: 100%;
+    overflow: hidden;
+    background: var(--accent);
+    padding: 0.55rem 0;
+    margin-top: 5rem;
+    position: relative;
+    z-index: 99;
+  }
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    animation: marqueeScroll 40s linear infinite;
+  }
+  .marquee-track:hover { animation-play-state: paused; }
+  .marquee-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    white-space: nowrap;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #fff;
+    padding: 0 2rem;
+  }
+  .marquee-dot {
+    width: 5px; height: 5px;
+    background: rgba(255,255,255,0.5);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  @keyframes marqueeScroll {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+</style>
+<style>
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #1a1612;
+    --paper: #faf8f5;
+    --cream: #f2ede6;
+    --tan: #e8dfd3;
+    --accent: #c9622f;
+    --accent-light: #f0e4db;
+    --muted: #8a7e74;
+    --serif: 'DM Serif Display', Georgia, serif;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.2rem 4rem;
+    background: rgba(250,248,245,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--tan);
+  }
+  .logo {
+    font-family: var(--serif);
+    font-size: 1.5rem;
+    color: var(--ink);
+    text-decoration: none;
+    letter-spacing: -0.02em;
+  }
+  .logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+  .nav-links a {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--accent); }
+  .nav-cta {
+    background: var(--ink);
+    color: var(--paper) !important;
+    padding: 0.55rem 1.4rem;
+    border-radius: 2px;
+  }
+  .nav-cta:hover { background: var(--accent); color: var(--paper) !important; }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    padding: 5rem 4rem 4rem;
+    gap: 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -20%; right: -10%;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, #f0dfd3 0%, transparent 70%);
+    z-index: 0;
+  }
+  .hero-left { position: relative; z-index: 1; }
+
+  /* ── Hero entrance animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  @keyframes btnPop {
+    0%   { opacity: 0; transform: translateY(18px) scale(0.97); }
+    60%  { transform: translateY(-3px) scale(1.02); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-size: 0.78rem; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-light);
+    padding: 0.4rem 1rem;
+    border-radius: 2px;
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fadeUp 0.6s ease 0.1s forwards;
+  }
+  .hero-tag::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: clamp(2.8rem, 5vw, 4.5rem);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+    color: var(--ink);
+    opacity: 0;
+    animation: fadeUp 0.7s ease 0.3s forwards;
+  }
+  .hero h1 em {
+    font-style: italic;
+    background: linear-gradient(90deg, var(--accent), #e8824f, var(--accent));
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: fadeUp 0.7s ease 0.3s forwards, shimmer 3s linear 1.2s infinite;
+  }
+  .hero p {
+    font-size: 1.05rem;
+    color: var(--muted);
+    max-width: 440px;
+    margin-bottom: 2.5rem;
+    line-height: 1.75;
+    font-weight: 300;
+    opacity: 0;
+    animation: fadeUp 0.7s ease 0.5s forwards;
+  }
+  .hero-btns {
+    display: flex; gap: 1rem; flex-wrap: wrap;
+    opacity: 0;
+    animation: fadeUp 0.7s ease 0.7s forwards;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    padding: 0.85rem 2rem;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    border: none; cursor: pointer;
+    letter-spacing: 0.02em;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 16px rgba(201,98,47,0.3);
+  }
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.25) 50%, transparent 70%);
+    background-size: 200% 100%;
+    background-position: -200% 0;
+    transition: background-position 0.5s;
+  }
+  .btn-primary:hover::after { background-position: 200% 0; }
+  .btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 28px rgba(201,98,47,0.4);
+  }
+  .btn-primary:active { transform: translateY(0) scale(0.97); }
+
+  .btn-outline {
+    border: 1.5px solid var(--ink);
+    color: var(--ink);
+    padding: 0.85rem 2rem;
+    border-radius: 30px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    position: relative; overflow: hidden;
+    transition: all 0.25s;
+  }
+  .btn-outline::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--ink);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+    z-index: 0;
+  }
+  .btn-outline span { position: relative; z-index: 1; }
+  .btn-outline:hover::before { transform: scaleX(1); }
+  .btn-outline:hover { color: var(--paper); }
+
+  .hero-right {
+    position: relative; z-index: 1;
+    background: #fff;
+    border: 1px solid var(--tan);
+    border-radius: 4px;
+    padding: 2rem;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.06);
+    animation: floatIn 0.8s ease both;
+  }
+  @keyframes floatIn {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .card-label {
+    font-size: 0.72rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+  .card-script {
+    background: var(--cream);
+    border-radius: 3px;
+    padding: 1.2rem;
+    font-size: 0.88rem;
+    color: var(--ink);
+    line-height: 1.8;
+    font-family: 'Courier New', monospace;
+    margin-bottom: 1.2rem;
+    border-left: 3px solid var(--accent);
+  }
+  .card-script strong { color: var(--accent); }
+  .langs {
+    display: flex; gap: 0.5rem; flex-wrap: wrap;
+  }
+  .lang-badge {
+    font-size: 0.72rem; font-weight: 600;
+    padding: 0.25rem 0.7rem;
+    border-radius: 30px;
+    background: var(--cream);
+    color: var(--muted);
+    border: 1px solid var(--tan);
+  }
+  .lang-badge.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  /* STATS */
+  .stats {
+    background: var(--ink);
+    padding: 3rem 4rem;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+  }
+  .stat { text-align: center; }
+  .stat-num {
+    font-family: var(--serif);
+    font-size: 2.5rem;
+    color: #fff;
+    letter-spacing: -0.03em;
+  }
+  .stat-num span { color: var(--accent); }
+  .stat-label {
+    font-size: 0.8rem; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-top: 0.3rem;
+  }
+
+  /* SECTION SHARED */
+  section { padding: 6rem 4rem; }
+  .section-header { margin-bottom: 3.5rem; }
+  .section-tag {
+    font-size: 0.75rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--accent);
+    margin-bottom: 0.8rem;
+  }
+  .section-title {
+    font-family: var(--serif);
+    font-size: clamp(2rem, 3.5vw, 3rem);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+  .section-sub {
+    font-size: 1rem; color: var(--muted);
+    margin-top: 0.8rem; max-width: 500px;
+    font-weight: 300; line-height: 1.75;
+  }
+
+  /* AI GENERATOR */
+  .generator-section { background: var(--cream); }
+  .generator-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: start;
+  }
+  .gen-form { display: flex; flex-direction: column; gap: 1.2rem; }
+  .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+  .form-group label {
+    font-size: 0.8rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  .form-group select,
+  .form-group input,
+  .form-group textarea {
+    padding: 0.8rem 1rem;
+    border: 1.5px solid var(--tan);
+    border-radius: 3px;
+    background: #fff;
+    font-family: var(--sans);
+    font-size: 0.9rem;
+    color: var(--ink);
+    transition: border-color 0.2s;
+    resize: none;
+  }
+  .form-group select:focus,
+  .form-group input:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .gen-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 1rem;
+    border-radius: 3px;
+    font-family: var(--sans);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    letter-spacing: 0.03em;
+    margin-top: 0.5rem;
+  }
+  .gen-btn:hover { background: #a84e24; transform: translateY(-1px); }
+  .gen-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  .gen-output {
+    background: #fff;
+    border: 1.5px solid var(--tan);
+    border-radius: 4px;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+  }
+  .output-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.2rem;
+    border-bottom: 1px solid var(--tan);
+  }
+  .output-title {
+    font-size: 0.8rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  .output-actions { display: flex; gap: 0.5rem; }
+  .icon-btn {
+    background: none; border: 1px solid var(--tan);
+    border-radius: 2px;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.78rem;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .output-body {
+    flex: 1;
+    padding: 1.5rem;
+    font-size: 0.9rem;
+    line-height: 1.9;
+    color: var(--ink);
+    overflow-y: auto;
+    white-space: pre-wrap;
+    font-family: var(--sans);
+  }
+  .output-placeholder {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    height: 100%;
+    color: var(--muted);
+    gap: 1rem;
+    text-align: center;
+    padding: 2rem;
+  }
+  .placeholder-icon {
+    width: 56px; height: 56px;
+    background: var(--cream);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+  }
+  .output-placeholder p { font-size: 0.9rem; max-width: 220px; font-weight: 300; }
+
+  /* loading animation */
+  .typing-dots { display: flex; gap: 4px; align-items: center; }
+  .typing-dots span {
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce {
+    0%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-8px); }
+  }
+
+  /* PORTFOLIO */
+  .portfolio-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+  .portfolio-card {
+    background: #fff;
+    border: 1px solid var(--tan);
+    border-radius: 4px;
+    overflow: hidden;
+    transition: box-shadow 0.25s, transform 0.25s;
+    cursor: pointer;
+  }
+  .portfolio-card:hover {
+    box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+    transform: translateY(-4px);
+  }
+  .card-thumb {
+    height: 160px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 3rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .card-body { padding: 1.2rem; }
+  .card-type {
+    font-size: 0.7rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 0.4rem;
+  }
+  .card-name {
+    font-family: var(--serif);
+    font-size: 1.15rem;
+    color: var(--ink);
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+  .card-desc {
+    font-size: 0.82rem;
+    color: var(--muted);
+    line-height: 1.6;
+    font-weight: 300;
+  }
+  .card-meta {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 1rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid var(--cream);
+  }
+  .card-lang {
+    font-size: 0.72rem; font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .card-words {
+    font-size: 0.72rem; color: var(--muted);
+  }
+
+  /* TESTIMONIALS */
+  .testimonials-section { background: var(--cream); }
+  .testimonials-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+  .testimonial-card {
+    background: #fff;
+    border: 1px solid var(--tan);
+    border-radius: 4px;
+    padding: 1.8rem;
+  }
+  .quote-mark {
+    font-family: var(--serif);
+    font-size: 3rem;
+    line-height: 1;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+  }
+  .testimonial-text {
+    font-size: 0.9rem;
+    color: var(--ink);
+    line-height: 1.75;
+    font-weight: 300;
+    margin-bottom: 1.2rem;
+    font-style: italic;
+  }
+  .testimonial-author {
+    display: flex; align-items: center; gap: 0.8rem;
+  }
+  .author-avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+  }
+  .author-name { font-size: 0.85rem; font-weight: 600; }
+  .author-role { font-size: 0.75rem; color: var(--muted); }
+
+  /* CTA */
+  .cta-section {
+    background: var(--ink);
+    text-align: center;
+    padding: 7rem 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-section::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(201,98,47,0.15) 0%, transparent 70%);
+  }
+  .cta-section h2 {
+    font-family: var(--serif);
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    color: #fff;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+    position: relative; z-index: 1;
+  }
+  .cta-section h2 em { color: var(--accent); font-style: italic; }
+  .cta-section p {
+    font-size: 1rem; color: var(--muted);
+    margin-bottom: 2.5rem;
+    position: relative; z-index: 1;
+    font-weight: 300;
+  }
+  .cta-section .btn-primary { position: relative; z-index: 1; font-size: 1rem; padding: 1rem 2.5rem; }
+
+  /* FOOTER */
+  footer {
+    padding: 2rem 4rem;
+    border-top: 1px solid var(--tan);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .footer-logo {
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    color: var(--ink);
+  }
+  .footer-logo span { color: var(--accent); }
+  .footer-copy { font-size: 0.8rem; color: var(--muted); }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    nav { padding: 1rem 1.5rem; }
+    .nav-links { display: none; }
+    .hero { grid-template-columns: 1fr; padding: 7rem 1.5rem 3rem; }
+    .hero-right { display: none; }
+    .stats { grid-template-columns: repeat(2, 1fr); padding: 2.5rem 1.5rem; }
+    section { padding: 4rem 1.5rem; }
+    .generator-wrap { grid-template-columns: 1fr; }
+    .portfolio-grid { grid-template-columns: 1fr 1fr; }
+    .testimonials-grid { grid-template-columns: 1fr; }
+    footer { flex-direction: column; gap: 0.5rem; text-align: center; }
+  }
+  @media (max-width: 600px) {
+    .portfolio-grid { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: 1fr 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+  }
+
+  /* ── Marquee Strip ── */
+  .marquee-wrap {
+    width: 100%;
+    overflow: hidden;
+    background: var(--accent);
+    padding: 0.55rem 0;
+    margin-top: 5rem;
+    position: relative;
+    z-index: 99;
+  }
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    animation: marqueeScroll 40s linear infinite;
+  }
+  .marquee-track:hover { animation-play-state: paused; }
+  .marquee-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    white-space: nowrap;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #fff;
+    padding: 0 2rem;
+  }
+  .marquee-dot {
+    width: 5px; height: 5px;
+    background: rgba(255,255,255,0.5);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  @keyframes marqueeScroll {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" onclick="showPage('home'); return false;" class="logo">Script<span>go</span></a>
+  <ul class="nav-links">
+    <li><a href="#generator" onclick="showPage('home')">Generator</a></li>
+    <li><a href="#portfolio" onclick="showPage('home')">Portfolio</a></li>
+    <li><a href="#" onclick="showPage('about'); return false;">About Us</a></li>
+    <li><a href="#" onclick="showPage('contact'); return false;">Contact</a></li>
+    <li><a href="#" onclick="showPage('privacy'); return false;">Privacy</a></li>
+    <li><a href="#" onclick="showPage('contact'); return false;" class="nav-cta">Hire Me</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div id="main-content">
+<!-- MARQUEE STRIP -->
+<div class="marquee-wrap">
+  <div class="marquee-track" id="marqueeTrack">
+    <div class="marquee-item"><span class="marquee-dot"></span>Create Viral Scripts in Seconds</div>
+    <div class="marquee-item"><span class="marquee-dot"></span>Turn Ideas into Powerful Scripts</div>
+    <div class="marquee-item"><span class="marquee-dot"></span>Write Smarter, Create Faster</div>
+    <div class="marquee-item"><span class="marquee-dot"></span>Your AI Partner for Perfect Scripts</div>
+    <div class="marquee-item"><span class="marquee-dot"></span>From Idea to Script Instantly</div>
+    <div class="marquee-item"><span class="marquee-dot"></span>Create Viral Scripts in Seconds</div>
+    <div class="marquee-item"><span class="marquee-dot"></span>Turn Ideas into Powerful Scripts</div>
+    <div class="marquee-item"><span class="marquee-dot"></span>Write Smarter, Create Faster</div>
+    <div class="marquee-item"><span class="marquee-dot"></span>Your AI Partner for Perfect Scripts</div>
+    <div class="marquee-item"><span class="marquee-dot"></span>From Idea to Script Instantly</div>
+  </div>
+</div>
+
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-tag">AI-Powered Script Writing</div>
+    <h1>Words that<br/><em>Move</em> your<br/>Audience.</h1>
+    <p>Professional scripts in any language, any format — from YouTube videos to cinematic films. Powered by AI, crafted with intent.</p>
+    <div class="hero-btns">
+      <a href="#generator" class="btn-primary">Generate a Script</a>
+      <a href="#portfolio" class="btn-outline"><span>View Portfolio</span></a>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="card-label">Generated Script Preview</div>
+    <div class="card-script">
+      <strong>INT. CAFE — DAWN</strong><br/><br/>
+      A steaming cup. A blank page. ARIA (28) stares out the window — not lost, but searching.<br/><br/>
+      <strong>ARIA (V.O.)</strong><br/>
+      Every great story begins with a single honest word...
+    </div>
+    <div class="card-label" style="margin-bottom:0.6rem;">Supported Languages</div>
+    <div class="langs">
+      <span class="lang-badge active">English</span>
+      <span class="lang-badge">हिन्दी</span>
+      <span class="lang-badge">اردو</span>
+      <span class="lang-badge">Español</span>
+      <span class="lang-badge">Français</span>
+      <span class="lang-badge">বাংলা</span>
+      <span class="lang-badge">Deutsch</span>
+      <span class="lang-badge">中文</span>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat">
+    <div class="stat-num">10000<span>+</span></div>
+    <div class="stat-label">Scripts Written</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">12<span>+</span></div>
+    <div class="stat-label">Languages</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">9</div>
+    <div class="stat-label">Script Types</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">89<span>%</span></div>
+    <div class="stat-label">Client Satisfaction</div>
+  </div>
+</div>
+
+<!-- AI GENERATOR -->
+<section class="generator-section" id="generator">
+  <div class="section-header">
+    <div class="section-tag">✦ AI Generator</div>
+    <h2 class="section-title">Generate Your Script<br/>in Seconds</h2>
+    <p class="section-sub">Fill in the details and let AI craft a professional script tailored to your exact needs.</p>
+  </div>
+  <div class="generator-wrap">
+    <div class="gen-form">
+      <input type="hidden" id="geminiApiKey" value="AIzaSyCIMFWA56X2k2QUMKs5IcDCR96mpL9Q8IU"/>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Script Type</label>
+          <select id="scriptType">
+            <option value="">Select type...</option>
+            <option>YouTube Video</option>
+            <option>Short Film</option>
+            <option>Ad Commercial</option>
+            <option>Podcast Episode</option>
+            <option>Corporate Presentation</option>
+            <option>Wedding Speech</option>
+            <option>Documentary</option>
+            <option>Social Media Reel</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Language</label>
+          <select id="language">
+            <option value="">Select language...</option>
+            <option>English</option>
+            <option>Hindi (हिन्दी)</option>
+            <option>Urdu (اردو)</option>
+            <option>Spanish</option>
+            <option>French</option>
+            <option>Bengali</option>
+            <option>German</option>
+            <option>Arabic</option>
+            <option>Chinese</option>
+            <option>Tamil</option>
+            <option>Punjabi</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Topic / Title</label>
+        <input type="text" id="topic" placeholder="e.g. 10 productivity hacks for students" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tone</label>
+          <select id="tone">
+            <option>Professional</option>
+            <option>Conversational</option>
+            <option>Dramatic</option>
+            <option>Humorous</option>
+            <option>Inspirational</option>
+            <option>Emotional</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Duration</label>
+          <select id="duration">
+            <option>Under 1 minute</option>
+            <option>1–3 minutes</option>
+            <option>3–5 minutes</option>
+            <option>5–10 minutes</option>
+            <option>10+ minutes</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Additional Notes (Optional)</label>
+        <textarea id="notes" rows="3" placeholder="e.g. Include a hook in the intro, target audience is college students..."></textarea>
+      </div>
+      <button class="gen-btn" id="generateBtn" onclick="generateScript()">
+        ✦ Generate Script
+      </button>
+    </div>
+
+    <div class="gen-output">
+      <div class="output-header">
+        <span class="output-title">Generated Script</span>
+        <div class="output-actions">
+          <button class="icon-btn" onclick="copyScript()">Copy</button>
+          <button class="icon-btn" onclick="clearScript()">Clear</button>
+        </div>
+      </div>
+      <div class="output-body" id="outputBody">
+        <div class="output-placeholder">
+          <div class="placeholder-icon">📝</div>
+          <p>Your generated script will appear here. Fill in the form and click Generate.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PORTFOLIO -->
+<section id="portfolio">
+  <div class="section-header">
+    <div class="section-tag">✦ Portfolio</div>
+    <h2 class="section-title">Scripts That Delivered<br/>Real Results</h2>
+    <p class="section-sub">A selection of work across genres, languages, and formats.</p>
+  </div>
+  <div class="portfolio-grid">
+    <div class="portfolio-card">
+      <div class="card-thumb" style="background: linear-gradient(135deg, #fde8d8, #f5c5a0);">🎬</div>
+      <div class="card-body">
+        <div class="card-type">Short Film</div>
+        <div class="card-name">Ek Roz Subah (One Fine Morning)</div>
+        <div class="card-desc">A Hindi drama exploring the quiet courage of a daily wage worker in Mumbai.</div>
+        <div class="card-meta">
+          <span class="card-lang">Hindi</span>
+          <span class="card-words">2,400 words</span>
+        </div>
+      </div>
+    </div>
+    <div class="portfolio-card">
+      <div class="card-thumb" style="background: linear-gradient(135deg, #dce8fd, #b0ccf5);">📺</div>
+      <div class="card-body">
+        <div class="card-type">YouTube Video</div>
+        <div class="card-name">The Future of AI in Education</div>
+        <div class="card-desc">An engaging English explainer for a 500K+ subscriber EdTech channel.</div>
+        <div class="card-meta">
+          <span class="card-lang">English</span>
+          <span class="card-words">1,100 words</span>
+        </div>
+      </div>
+    </div>
+    <div class="portfolio-card">
+      <div class="card-thumb" style="background: linear-gradient(135deg, #e0f5e0, #a5d6a7);">📢</div>
+      <div class="card-body">
+        <div class="card-type">Ad Commercial</div>
+        <div class="card-name">Zindagi Ki Khushbu — Perfume Brand</div>
+        <div class="card-desc">A 60-second emotional Urdu/Hindi TVC script for a luxury fragrance brand.</div>
+        <div class="card-meta">
+          <span class="card-lang">Urdu / Hindi</span>
+          <span class="card-words">300 words</span>
+        </div>
+      </div>
+    </div>
+    <div class="portfolio-card">
+      <div class="card-thumb" style="background: linear-gradient(135deg, #fce4ec, #f48fb1);">🎙️</div>
+      <div class="card-body">
+        <div class="card-type">Podcast Episode</div>
+        <div class="card-name">The Startup Grind — Episode 14</div>
+        <div class="card-desc">A structured podcast script with interview questions, transitions and CTA segments.</div>
+        <div class="card-meta">
+          <span class="card-lang">English</span>
+          <span class="card-words">3,200 words</span>
+        </div>
+      </div>
+    </div>
+    <div class="portfolio-card">
+      <div class="card-thumb" style="background: linear-gradient(135deg, #f3e5f5, #ce93d8);">🎭</div>
+      <div class="card-body">
+        <div class="card-type">Documentary</div>
+        <div class="card-name">Rivers of the Forgotten — Narration Script</div>
+        <div class="card-desc">A Spanish environmental documentary narration script, poetic and data-driven.</div>
+        <div class="card-meta">
+          <span class="card-lang">Spanish</span>
+          <span class="card-words">4,500 words</span>
+        </div>
+      </div>
+    </div>
+    <div class="portfolio-card">
+      <div class="card-thumb" style="background: linear-gradient(135deg, #fff8e1, #ffe082);">📱</div>
+      <div class="card-body">
+        <div class="card-type">Social Media Reel</div>
+        <div class="card-name">30-Day Glow Up Challenge Series</div>
+        <div class="card-desc">A 30-part hook-heavy reel script series for an Instagram fitness influencer.</div>
+        <div class="card-meta">
+          <span class="card-lang">English</span>
+          <span class="card-words">4,800 words</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials-section" id="about">
+  <div class="section-header">
+    <div class="section-tag">✦ Testimonials</div>
+    <h2 class="section-title">What Clients Say</h2>
+  </div>
+  <div class="testimonials-grid">
+    <div class="testimonial-card">
+      <div class="quote-mark">"</div>
+      <p class="testimonial-text">The script gave our film the emotional depth we were looking for. Every line felt purposeful. We couldn't have asked for better.</p>
+      <div class="testimonial-author">
+        <div class="author-avatar" style="background: #c9622f;">A</div>
+        <div>
+          <div class="author-name">Arjun Kapoor</div>
+          <div class="author-role">Film Director, Mumbai</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <div class="quote-mark">"</div>
+      <p class="testimonial-text">My YouTube channel grew 3x after switching to these scripts. The hooks are incredible. My audience actually watches till the end now.</p>
+      <div class="testimonial-author">
+        <div class="author-avatar" style="background: #2f7ac9;">S</div>
+        <div>
+          <div class="author-name">Sara Chen</div>
+          <div class="author-role">YouTube Creator, 280K subscribers</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <div class="quote-mark">"</div>
+      <p class="testimonial-text">Hamare brand ke liye Urdu mein script likhna mushkil tha — but the result was breathtaking. Our TVC went viral in 2 days.</p>
+      <div class="testimonial-author">
+        <div class="author-avatar" style="background: #2fc97a;">F</div>
+        <div>
+          <div class="author-name">Fatima Zaidi</div>
+          <div class="author-role">Marketing Head, Lahore</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="contact">
+  <h2>Ready to tell your<br/><em>story?</em></h2>
+  <p>Let's craft a script that moves, sells, and stays remembered.</p>
+  <a href="#generator" class="btn-primary">Generate Now →</a>
+</section>
+
+
+
+<style>
+</style>
+
+<!-- FOOTER -->
+<footer style="background: var(--ink); padding: 0; color: #fff; display: block;">
+
+  <!-- Main footer content — vertical centered layout -->
+  <div style="display:flex; flex-direction:column; align-items:center; text-align:center; padding: 4rem 2rem 2.5rem;">
+
+    <!-- Logo -->
+    <div style="font-family:var(--serif); font-size:2rem; color:#fff; margin-bottom:0.5rem; letter-spacing:-0.02em;">
+      Script<span style="color:var(--accent);">go</span>
+    </div>
+    <p style="font-size:0.83rem; color:#8a7e74; line-height:1.7; font-weight:300; max-width:280px; margin-bottom:2rem;">
+      Professional scripts in any language,<br/>any format — powered by AI.
+    </p>
+
+    <!-- Divider -->
+    <div style="width:40px; height:2px; background:var(--accent); border-radius:2px; margin-bottom:2rem;"></div>
+
+    <!-- Gmail -->
+    <a href="/cdn-cgi/l/email-protection#abd8dedbdbc4d9dfd8c8d9c2dbdfccc4ebccc6cac2c785c8c4c6" style="display:flex; align-items:center; gap:0.8rem; text-decoration:none; color:#fff; font-size:0.88rem; margin-bottom:1rem; transition:color 0.2s; padding:0.7rem 1.4rem; border:1px solid rgba(255,255,255,0.1); border-radius:40px; background:rgba(255,255,255,0.04);" onmouseover="this.style.borderColor='#c9622f'; this.style.color='#c9622f';" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.color='#fff';">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>
+      <span class="__cf_email__" data-cfemail="fd8e888d8d928f898e9e8f948d899a92bd9a909c9491d39e9290">[email&#160;protected]</span>
+    </a>
+
+    <!-- Instagram -->
+    <a href="https://www.instagram.com/scriptgoo?utm_source=qr&igsh=MXNzb2x6aDFzdWpoMg==" target="_blank"
+       style="display:flex; align-items:center; gap:0.8rem; text-decoration:none; color:#fff; font-size:0.88rem; margin-bottom:2.5rem; transition:all 0.2s; padding:0.7rem 1.4rem; border:1px solid rgba(255,255,255,0.1); border-radius:40px; background:rgba(255,255,255,0.04);"
+       onmouseover="this.style.borderColor='#E1306C'; this.style.color='#E1306C'; this.style.background='rgba(225,48,108,0.08)';"
+       onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.color='#fff'; this.style.background='rgba(255,255,255,0.04)';">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>
+      @scriptgoo &nbsp;·&nbsp; Follow on Instagram
+    </a>
+
+    <!-- Founder -->
+    <div style="margin-bottom:1.5rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09); border-radius:12px; padding:1.2rem 2rem; text-align:center; min-width:240px;">
+      <div style="font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:#8a7e74; margin-bottom:0.5rem;">Founder</div>
+      <div style="font-family:var(--serif); font-size:1.15rem; color:#fff; margin-bottom:0.3rem;">Prince Seta</div>
+      <a href="/cdn-cgi/l/email-protection#e99a8c9d88999b80878a8cdddad1a98e84888085c78a8684" style="font-size:0.8rem; color:#8a7e74; text-decoration:none; transition:color 0.2s;" onmouseover="this.style.color='#c9622f'" onmouseout="this.style.color='#8a7e74'">
+        <span class="__cf_email__" data-cfemail="433026372233312a2d202677707b03242e222a2f6d202c2e">[email&#160;protected]</span>
+      </a>
+    </div>
+
+    <!-- Made in India -->
+    <div style="display:flex; align-items:center; gap:0.5rem; font-size:0.82rem; color:#8a7e74; margin-bottom:0.3rem;">
+      <span style="font-size:1.1rem;">🇮🇳</span>
+      <span>Made in India with</span>
+      <span style="color:#c9622f; font-size:1rem;">♥</span>
+    </div>
+
+  </div>
+
+  <!-- Page Links -->
+  <div style="display:flex; gap:1rem; justify-content:center; margin-bottom:1.5rem; flex-wrap:wrap;">
+    <a href="#" onclick="showPage('about'); return false;" style="font-size:0.82rem; color:#8a7e74; text-decoration:none; padding:0.45rem 1.1rem; border:1px solid rgba(255,255,255,0.1); border-radius:30px; transition:all 0.2s;" onmouseover="this.style.borderColor='#c9622f';this.style.color='#c9622f'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)';this.style.color='#8a7e74'">About Us</a>
+    <a href="#" onclick="showPage('contact'); return false;" style="font-size:0.82rem; color:#8a7e74; text-decoration:none; padding:0.45rem 1.1rem; border:1px solid rgba(255,255,255,0.1); border-radius:30px; transition:all 0.2s;" onmouseover="this.style.borderColor='#c9622f';this.style.color='#c9622f'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)';this.style.color='#8a7e74'">Contact Us</a>
+    <a href="#" onclick="showPage('privacy'); return false;" style="font-size:0.82rem; color:#8a7e74; text-decoration:none; padding:0.45rem 1.1rem; border:1px solid rgba(255,255,255,0.1); border-radius:30px; transition:all 0.2s;" onmouseover="this.style.borderColor='#c9622f';this.style.color='#c9622f'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)';this.style.color='#8a7e74'">Privacy Policy</a>
+  </div>
+
+  <!-- Bottom bar -->
+  <div style="border-top:1px solid rgba(255,255,255,0.07); padding:1.2rem 2rem; text-align:center;">
+    <div style="font-size:0.76rem; color:#5a5550;">© 2026 Scriptgo. All rights reserved.</div>
+  </div>
+
+</footer>
+</div>
+
+<script>
+async function generateScript() {
+  const apiKey = 'OPENROUTER_API_KEY_HERE';
+  const type = document.getElementById('scriptType').value;
+  const lang = document.getElementById('language').value;
+  const topic = document.getElementById('topic').value.trim();
+  const tone = document.getElementById('tone').value;
+  const duration = document.getElementById('duration').value;
+  const notes = document.getElementById('notes').value.trim();
+
+
+  if (!type || !lang || !topic) {
+    alert('Please fill in Script Type, Language, and Topic.');
+    return;
+  }
+
+  const btn = document.getElementById('generateBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Generating...';
+
+  const output = document.getElementById('outputBody');
+  output.innerHTML = `
+    <div class="output-placeholder">
+      <div class="typing-dots"><span></span><span></span><span></span></div>
+      <p>Crafting your script...</p>
+    </div>`;
+
+  const prompt = `You are a professional script writer. Write a complete ${type} script in ${lang} language.
+
+Topic: ${topic}
+Tone: ${tone}
+Duration: ${duration}
+${notes ? 'Additional notes: ' + notes : ''}
+
+Format the script properly with scene headings (if applicable), speaker names in CAPS, and clear stage directions. Make it compelling, well-structured, and audience-ready. Start directly with the script content.`;
+
+  try {
+    const resp = await fetch(
+      'https://openrouter.ai/api/v1/chat/completions',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+          'HTTP-Referer': 'https://scriptgo.in',
+          'X-Title': 'Scriptgo'
+        },
+        body: JSON.stringify({
+          model: 'openai/gpt-oss-20b:free',
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 2000,
+          temperature: 0.8
+        })
+      }
+    );
+
+    if (!resp.ok) {
+      const errData = await resp.json().catch(() => ({}));
+      const msg = errData.error?.message || 'API Error ' + resp.status;
+      throw new Error(msg);
+    }
+
+    const data = await resp.json();
+    const text = data.choices?.[0]?.message?.content?.trim();
+
+    if (!text) throw new Error('No script was generated. Please try again.');
+
+    output.style.whiteSpace = 'pre-wrap';
+    output.style.fontFamily = 'var(--sans)';
+    output.textContent = text;
+
+  } catch (err) {
+    output.innerHTML = `
+      <div class="output-placeholder">
+        <div class="placeholder-icon">⚠️</div>
+        <p style="color:#c9622f; font-size:0.85rem; max-width:260px;">${err.message}</p>
+      </div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✦ Generate Script';
+  }
+}
+
+
+
+function copyScript() {
+  const text = document.getElementById('outputBody').innerText;
+  if (!text || text.includes('script will appear here')) return;
+  navigator.clipboard.writeText(text).then(() => alert('Script copied!'));
+}
+
+function clearScript() {
+  document.getElementById('outputBody').innerHTML = `
+    <div class="output-placeholder">
+      <div class="placeholder-icon">📝</div>
+      <p>Your generated script will appear here. Fill in the form and click Generate.</p>
+    </div>`;
+}
+
+// ── Page switching ──
+function showPage(page) {
+  // Show/hide main content
+  document.getElementById('main-content').style.display = page === 'home' ? 'block' : 'none';
+  
+  // Show/hide inner pages
+  ['about','contact','privacy'].forEach(p => {
+    const el = document.getElementById('page-' + p);
+    if (el) el.style.display = (p === page) ? 'block' : 'none';
+  });
+
+  // Update nav active state
+  document.querySelectorAll('.nav-links a').forEach(a => {
+    a.style.color = '';
+  });
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  // Push to history so back button works
+  history.pushState({ page }, '', '#' + page);
+}
+
+// Handle browser back/forward
+window.addEventListener('popstate', function(e) {
+  const page = (e.state && e.state.page) ? e.state.page : 'home';
+  showPage(page);
+});
+
+function submitContactForm() {
+  const name = document.getElementById('c-name').value.trim();
+  const email = document.getElementById('c-email').value.trim();
+  const message = document.getElementById('c-message').value.trim();
+  const subject = document.getElementById('c-subject').value;
+  if (!name || !email || !message) { alert('Please fill in Name, Email and Message.'); return; }
+  const mailtoLink = 'mailto:supportscriptgo@gmail.com?subject=Scriptgo: ' + encodeURIComponent(subject) + '&body=Name: ' + encodeURIComponent(name) + '%0AEmail: ' + encodeURIComponent(email) + '%0A%0AMessage:%0A' + encodeURIComponent(message);
+  window.location.href = mailtoLink;
+  document.getElementById('c-success').style.display = 'block';
+}
+
+</script>
+</body>
+</html>
